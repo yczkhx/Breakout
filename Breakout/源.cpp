@@ -135,7 +135,18 @@ int Gaming()
 	
 	while (1)
 	{
-		
+		if (breakOut == 25)
+			{
+				ball.Smaller();
+			}
+			if (breakOut == 55)
+			{
+				board.Shorter();
+			}
+			if (breakOut == 95 )
+			{
+				ball.Faster();
+			}
 		//如果 木板没接住球 或 已经打碎全部砖块 时 游戏结束
 		if (!ball.isCatched || brick.count == breakOut)
 		{
@@ -144,21 +155,7 @@ int Gaming()
 			solidcircle(ball.x, ball.y, ball.r);
 			solidrectangle(board.x, board.y, board.x + board.length, board.y + board.width);
 			score = score + breakOut;
-			if (breakOut > 5 && breakOut < 25)
-			{
-				ball.Smaller();
-				ball.Faster();
-			}
-			if (breakOut > 25 && breakOut < 55)
-			{
-				ball.Smaller();
-				ball.Faster();
-			}
-			if (breakOut > 55 )
-			{
-				ball.Smaller();
-				ball.Faster();
-			}
+			
 			if (brick.count > breakOut)
 			{
 				return MessageBox(NULL, "You Lose!", "打砖块", MB_RETRYCANCEL);
