@@ -7,7 +7,8 @@
 #include<map>
 #include<fstream>
 #include<string>
-#include <algorithm>
+#include<algorithm>
+#include<windows.h>
 using namespace std;
 
 //定义图形窗口的宽度、高度
@@ -118,104 +119,53 @@ public:
 };
 
 
-
-int Gaming()
-{
-	Brick brick;
-	brick.Level(now_level);
-	brick.DrawBricks();
-
-	Board board;
-	setfillcolor(LIGHTBLUE);
-	solidrectangle(board.x, board.y, board.x + board.length, board.y + board.width);
-
-	Ball ball(board.width);
-	setfillcolor(LIGHTGRAY);
-	solidcircle(ball.x, ball.y, ball.r);
-	
-	while (1)
-	{
-		if (breakOut == 25)
-			{
-				ball.Smaller();
-			}
-			if (breakOut == 55)
-			{
-				board.Shorter();
-			}
-			if (breakOut == 95 )
-			{
-				ball.Faster();
-			}
-		//如果 木板没接住球 或 已经打碎全部砖块 时 游戏结束
-		if (!ball.isCatched || brick.count == breakOut)
-		{
-			//清除球和木板
-			setfillcolor(BLACK);
-			solidcircle(ball.x, ball.y, ball.r);
-			solidrectangle(board.x, board.y, board.x + board.length, board.y + board.width);
-			score = score + breakOut;
-			
-			if (brick.count > breakOut)
-			{
-				return MessageBox(NULL, "You Lose!", "打砖块", MB_RETRYCANCEL);
-
-			}
-				
-			else if (brick.count == breakOut)
-			{
-				now_level++;
-				breakOut = 0;
-				return MessageBox(NULL, "You Win! 是否进入下一关", "打砖块", MB_OKCANCEL);
-			}
-				
-		}
-
-		if (game_mode == 1)
-		{
-			if (_kbhit())
-			{
-				board.Move();
-			}
-		}
-		else if (game_mode == 2)
-		{
-			if (MouseHit())
-				m = GetMouseMsg();
-
-			if (m.uMsg == WM_MOUSEMOVE)
-			{
-				board.Move();
-			}
-		}
-
-		ball.Move(brick, board);
-	}
-}
+int Gaming();
 void list(string user_name);
 int list_out();
-
-
-
+void WelcomePage();
 
 
 int main()
 {
-	cout << "开始游戏:1" << endl;
-	cout << "查看排行榜:2" << endl;
-	cin >> game_mode;
-	if (game_mode == 2)
+	initgraph(400, 600);			//初始化图形界面
+	WelcomePage();
+	int ch;
+	int flag = 0;
+	while (1)
 	{
-		list_out();
-	}
-	//提示用户选择游戏模式
-	cout << "请选择您的游戏模式：" << endl;
-	cout << "1.键盘操作模式" << endl;
-	cout << "2.鼠标操作模式" << endl;
-	cout << "请输入您的选择（1/2):" << endl;
+		ch = _getch();
+		switch (ch)
+		{
+		case 59:					//F1
+			flag = 1;				//进入游戏(键盘）
+			game_mode = 1;
+			break;
+		case 60:	                //F2
+			flag = 1;
+			game_mode = 2;          //进入游戏(鼠标）
+			break;
+		case 61:					//F3
+			closegraph();
+			list_out();
+			system("pause");
+			initgraph(400, 600);
+			WelcomePage();
+			break;
+		case 62:					//F3
+			closegraph();			//关闭图形界面
+			exit(EXIT_SUCCESS);		//退出
+			break;
+		default:
+			break;
+		}
 
-	cin >> game_mode;
-	system("pause");
+		if (flag == 1 || flag == 2)
+		{
+			break;
+		}
+	}
+	closegraph();
+
 	initgraph(WIDTH, HEIGHT);  //初始化窗口
 	while (1)
 	{
@@ -539,7 +489,79 @@ void Ball::Move(Brick& brick, Board& board)
 
 
 
+int Gaming()
+{
+	Brick brick;
+	brick.Level(now_level);
+	brick.DrawBricks();
 
+	Board board;
+	setfillcolor(LIGHTBLUE);
+	solidrectangle(board.x, board.y, board.x + board.length, board.y + board.width);
+
+	Ball ball(board.width);
+	setfillcolor(LIGHTGRAY);
+	solidcircle(ball.x, ball.y, ball.r);
+
+	while (1)
+	{
+		if (breakOut == 25)
+		{
+			ball.Smaller();
+		}
+		if (breakOut == 55)
+		{
+			board.Shorter();
+		}
+		if (breakOut == 95)
+		{
+			ball.Faster();
+		}
+		//如果 木板没接住球 或 已经打碎全部砖块 时 游戏结束
+		if (!ball.isCatched || brick.count == breakOut)
+		{
+			//清除球和木板
+			setfillcolor(BLACK);
+			solidcircle(ball.x, ball.y, ball.r);
+			solidrectangle(board.x, board.y, board.x + board.length, board.y + board.width);
+			score = score + breakOut;
+
+			if (brick.count > breakOut)
+			{
+				return MessageBox(NULL, "You Lose!", "打砖块", MB_RETRYCANCEL);
+
+			}
+
+			else if (brick.count == breakOut)
+			{
+				now_level++;
+				breakOut = 0;
+				return MessageBox(NULL, "You Win! 是否进入下一关", "打砖块", MB_OKCANCEL);
+			}
+
+		}
+
+		if (game_mode == 1)
+		{
+			if (_kbhit())
+			{
+				board.Move();
+			}
+		}
+		else if (game_mode == 2)
+		{
+			if (MouseHit())
+				m = GetMouseMsg();
+
+			if (m.uMsg == WM_MOUSEMOVE)
+			{
+				board.Move();
+			}
+		}
+
+		ball.Move(brick, board);
+	}
+}
 //排行榜
 void list(string user_name)
 {
@@ -613,3 +635,27 @@ int list_out()
 	return 0;
 }
 
+void WelcomePage()
+{
+	setbkcolor(YELLOW);						//设置背景色
+	cleardevice();								//刷新背景
+
+	settextcolor(BLACK);
+	settextstyle(60, 0, "黑体");
+	outtextxy(80, 60, "打 砖 块");
+
+	setfillcolor(BLUE);						//设置填充颜色为黄色
+	solidroundrect(90, 250, 320, 290, 10, 10);	//开始游戏(键盘)选项
+	solidroundrect(90, 300, 320, 340, 10, 10);	//开始游戏(鼠标)选项
+	solidroundrect(90, 350, 320, 390, 10, 10);	//排行榜选项
+	solidroundrect(90, 400, 320, 440, 10, 10); //退出选项
+
+	setbkcolor(BLUE);							//设置文字的背景色
+	setbkmode(OPAQUE);							//文字输出时的背景模式（背景用当前背景色填充）
+	settextcolor(WHITE);							//设置文字颜色
+	settextstyle(20, 0, "黑体");					//设置字体大小，模式
+	outtextxy(110, 260, "开始游戏(键盘)   F1");			//打印选项
+	outtextxy(110, 310, "开始游戏(鼠标)   F2");
+	outtextxy(110, 360, "排行榜           F3");
+	outtextxy(110, 410, "退出             F4");
+}
