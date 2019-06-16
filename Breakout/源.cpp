@@ -3,19 +3,46 @@
 #include<time.h>
 #include<stdlib.h>
 #include<iostream>
+#include<vector>
+#include<map>
+#include<fstream>
+#include<string>
+#include <algorithm>
 using namespace std;
 
 //定义图形窗口的宽度、高度
-#define WIDTH 400
-#define HEIGHT 600
+const int  WIDTH = 400;
+const int  HEIGHT = 600;
 //设置砖块行数、列数
 #define ROW 5
 #define COLUMN 10
 
-int i, j,color;
-int levels[5][ROW][COLUMN] = { 0 };//准备之后用来储存不同关卡用的，预设有5个关卡
+int i, j, color;
+int levels[5][ROW][COLUMN] = 
+{
+	{
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1} ,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
+	}
+	,{
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1,-1,-1,-1,-1,0} ,{-1,-1,-1,-1,-1,-1,-1,-1,0,0},{-1,-1,-1,-1,-1,-1,-1,0,0,0},{-1,-1,-1,-1,-1,-1,0,0,0,0}
+	}
+	,{
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},{0,-1,-1,-1,-1,-1,-1,-1,-1,0} ,{0,-1,-1,-1,-1,-1,-1,-1,0,0},{0,-1,-1,-1,-1,-1,-1,0,0,0},{0,-1,-1,-1,-1,-1,0,0,0,0}
+	}
+	,{
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},{0,-1,-1,-1,-1,-1,-1,-1,-1,0} ,{0,0,-1,-1,-1,-1,-1,-1,0,0},{0,0,0,-1,-1,-1,-1,0,0,0},{0,0,0,0,-1,-1,0,0,0,0}
+	}
+	,{
+		{0,0,0,0,-1,-1,0,0,0,0},{0,0,0,-1,-1,-1,-1,0,0,0},{0,0,-1,-1,-1,-1,-1,-1,0,0},{0,-1,-1,-1,-1,-1,-1,-1,-1,0} ,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}
+	}
+};//5个关卡 
 int breakOut = 0;//记录已经打碎的砖块
-int game_mode ;//记录用户选择的游戏模式
+int score = 0;//记录得分
+int list_judge;
+int now_level = 0;
+string user_name;//用户名
+map<string, int> scorelist;
+int game_mode;//记录用户选择的游戏模式
 MOUSEMSG m;       //记录鼠标消息
 
 
@@ -26,21 +53,21 @@ public:
 	const int length = 40;
 	const int width = 20;
 	int bricks[ROW][COLUMN];
-	int count;
+	int count = 0;
 
 	Brick();
-	Brick(int level);
+	void Level(int level);
 
 	void DrawBricks();//画出所有砖块
 };
 
 
-class Board  
+class Board
 {
 public:
-	int x, y;             
-	int length = 60;  
-	int width = 15;   
+	int x, y;
+	int length = 60;
+	int width = 15;
 
 	Board();
 
@@ -73,12 +100,12 @@ public:
 	bool BottomBorderCollision();
 
 	//检测球是否与木板顶部、侧面发生碰撞
-	bool BoardTopCollision(Board &board);
-	bool BoardSideCollision(Board &board);
+	bool BoardTopCollision(Board& board);
+	bool BoardSideCollision(Board& board);
 
 	//检测球是否与某砖块的上下面、侧面发生碰撞
-	bool BricksUpDownCollision(Brick &brick);
-	bool BricksSideCollision(Brick &brick);
+	bool BricksUpDownCollision(Brick& brick);
+	bool BricksSideCollision(Brick& brick);
 
 	//预设吃到道具后让球大小变化、速度变化的函数
 	void Bigger();
@@ -87,7 +114,7 @@ public:
 	void Slower();
 
 	//移动球
-	void Move(Brick &brick, Board &board);
+	void Move(Brick& brick, Board& board);
 };
 
 
@@ -95,6 +122,7 @@ public:
 int Gaming()
 {
 	Brick brick;
+	brick.Level(now_level);
 	brick.DrawBricks();
 
 	Board board;
@@ -104,9 +132,10 @@ int Gaming()
 	Ball ball(board.width);
 	setfillcolor(LIGHTGRAY);
 	solidcircle(ball.x, ball.y, ball.r);
-
+	
 	while (1)
 	{
+		
 		//如果 木板没接住球 或 已经打碎全部砖块 时 游戏结束
 		if (!ball.isCatched || brick.count == breakOut)
 		{
@@ -114,11 +143,35 @@ int Gaming()
 			setfillcolor(BLACK);
 			solidcircle(ball.x, ball.y, ball.r);
 			solidrectangle(board.x, board.y, board.x + board.length, board.y + board.width);
-
+			score = score + breakOut;
+			if (breakOut > 5 && breakOut < 25)
+			{
+				ball.Smaller();
+				ball.Faster();
+			}
+			if (breakOut > 25 && breakOut < 55)
+			{
+				ball.Smaller();
+				ball.Faster();
+			}
+			if (breakOut > 55 )
+			{
+				ball.Smaller();
+				ball.Faster();
+			}
 			if (brick.count > breakOut)
+			{
 				return MessageBox(NULL, "You Lose!", "打砖块", MB_RETRYCANCEL);
+
+			}
+				
 			else if (brick.count == breakOut)
-				return MessageBox(NULL, "You Win!", "打砖块", MB_RETRYCANCEL);
+			{
+				now_level++;
+				breakOut = 0;
+				return MessageBox(NULL, "You Win! 是否进入下一关", "打砖块", MB_OKCANCEL);
+			}
+				
 		}
 
 		if (game_mode == 1)
@@ -128,7 +181,7 @@ int Gaming()
 				board.Move();
 			}
 		}
-		else if(game_mode==2)
+		else if (game_mode == 2)
 		{
 			if (MouseHit())
 				m = GetMouseMsg();
@@ -138,14 +191,26 @@ int Gaming()
 				board.Move();
 			}
 		}
-		
+
 		ball.Move(brick, board);
 	}
 }
+void list(string user_name);
+int list_out();
+
+
+
 
 
 int main()
 {
+	cout << "开始游戏:1" << endl;
+	cout << "查看排行榜:2" << endl;
+	cin >> game_mode;
+	if (game_mode == 2)
+	{
+		list_out();
+	}
 	//提示用户选择游戏模式
 	cout << "请选择您的游戏模式：" << endl;
 	cout << "1.键盘操作模式" << endl;
@@ -157,20 +222,25 @@ int main()
 	initgraph(WIDTH, HEIGHT);  //初始化窗口
 	while (1)
 	{
-		if (Gaming() == IDCANCEL)         
+		if (Gaming() == IDCANCEL)           //点击 取消
 			break;
 	}
 	closegraph();//关闭窗口
 	system("cls");
-	//在这里加入排行榜显示
-	//
-	//
-	//
-	//
-	system("pause");
+
+	cout << "你的得分是" << ' ' << score << endl;//排行榜显示
+	cout << "是否计入排行榜" << endl;
+	cout << "1.是" << endl;
+	cout << "2.否" << endl;
+	cin >> list_judge;
+	if (list_judge == 1)
+	{
+		cout << "请输入你的名字" << endl;
+		cin >> user_name;
+		list(user_name);
+	}
 	return 0;
 }
-
 
 
 
@@ -180,11 +250,21 @@ int main()
 Brick::Brick()
 {
 	memset(bricks, -1, sizeof(bricks));
-	count = ROW * COLUMN;
+	for (i = 0; i < ROW; ++i)
+	{
+		for (j = 0; j < COLUMN; ++j)
+		{
+			if (levels[now_level][i][j] == -1)
+			{
+				count++;
+			}
+		}
+	}
 }
 
-Brick::Brick(int level)
+void Brick::Level(int level)
 {
+	
 	for (i = 0; i < ROW; ++i)
 	{
 		for (j = 0; j < COLUMN; ++j)
@@ -196,7 +276,7 @@ Brick::Brick(int level)
 
 void Brick::DrawBricks()
 {
-	  //设置砖块颜色
+	//设置砖块颜色
 	setlinecolor(BLACK);    //设置边框颜色
 	for (i = 0; i < ROW; i++)
 	{
@@ -205,8 +285,8 @@ void Brick::DrawBricks()
 			if (bricks[i][j] == -1)
 			{
 				color = 5636095 + i * 30000 + j * 300000;
-                                setfillcolor(color);
-				fillrectangle(j*length, i*width, (j + 1)*length, (i + 1)*width);
+				setfillcolor(color);
+				fillrectangle(j * length, i * width, (j + 1) * length, (i + 1) * width);
 			}
 		}
 	}
@@ -237,9 +317,9 @@ void Board::Shorter()
 
 void Board::KeyBoardMove()
 {
-	int ch;         
+	int ch;
 	ch = _getch();//读取用户按键
-	
+
 	setfillcolor(BLACK);//除去原来木板
 	solidrectangle(x, y, x + length, y + width);
 
@@ -286,11 +366,11 @@ void Board::MouseMove()
 
 void Board::Move()
 {
-	if (game_mode==1)
+	if (game_mode == 1)
 	{
 		KeyBoardMove();
 	}
-	else if(game_mode==2)
+	else if (game_mode == 2)
 	{
 		MouseMove();
 	}
@@ -305,19 +385,19 @@ void Board::Move()
 //Ball
 Ball::Ball(int board_width)
 {
-	x = WIDTH  / 2;
+	x = WIDTH / 2;
 	y = HEIGHT - board_width - r;
 
 	//初始化移动方向和小球状态
 	deltaX = 1;
 	deltaY = -1;
-	GO = 0; 
+	GO = 0;
 	isCatched = 1;
 }
 
 bool Ball::SideBorderCollision()//右边界或左边界碰撞检测
 {
-	if (x >= WIDTH  - r || x <= r)
+	if (x >= WIDTH - r || x <= r)
 		return true;
 	else
 		return false;
@@ -339,7 +419,7 @@ bool Ball::BottomBorderCollision()//小球掉落出底部检测
 		return false;
 }
 
-bool Ball::BoardTopCollision(Board &board)//木板顶部碰撞检测
+bool Ball::BoardTopCollision(Board& board)//木板顶部碰撞检测
 {
 	if (GO && (x + 1 >= board.x - r) && (x - 1 <= board.x + board.length + r) && (y + 1 >= board.y - r) && (y + 1 <= board.y))
 		return true;
@@ -347,27 +427,27 @@ bool Ball::BoardTopCollision(Board &board)//木板顶部碰撞检测
 		return false;
 }
 
-bool Ball::BoardSideCollision(Board &board)//木板侧面碰撞检测
+bool Ball::BoardSideCollision(Board& board)//木板侧面碰撞检测
 {
-	if (GO && (x + 1 >= board.x - r) && (x - 1 <= board.x + board.length + r) && (y + 1 >= board.y - r) && (y <= HEIGHT-r))
+	if (GO && (x + 1 >= board.x - r) && (x - 1 <= board.x + board.length + r) && (y + 1 >= board.y - r) && (y <= HEIGHT - r))
 		return true;
 	else
 		return false;
 }
 
-bool Ball::BricksUpDownCollision(Brick &brick)//砖块上下面碰撞检测
+bool Ball::BricksUpDownCollision(Brick& brick)//砖块上下面碰撞检测
 {
-	if ((brick.bricks[i][j] == -1) && (x + 1 >= j * brick.length - r) && (x - 1 <= (j + 1)*brick.length + r) &&
-		(y + 1 >= i * brick.width - r) && (y - 1 <= (i + 1)*brick.width + r) && (x + 1 >= j * brick.length) && (x - 1 <= (j + 1)*brick.length))
+	if ((brick.bricks[i][j] == -1) && (x + 1 >= j * brick.length - r) && (x - 1 <= (j + 1) * brick.length + r) &&
+		(y + 1 >= i * brick.width - r) && (y - 1 <= (i + 1) * brick.width + r) && (x + 1 >= j * brick.length) && (x - 1 <= (j + 1) * brick.length))
 		return true;
 	else
 		return false;
 }
 
-bool Ball::BricksSideCollision(Brick &brick)//砖块侧面碰撞检测
+bool Ball::BricksSideCollision(Brick& brick)//砖块侧面碰撞检测
 {
-	if ((brick.bricks[i][j] == -1) && (x + 1 >= j * brick.length - r) && (x - 1 <= (j + 1)*brick.length + r) &&
-		(y + 1 >= i * brick.width - r) && (y - 1 <= (i + 1)*brick.width + r) && (y + 1 > i*brick.width - r) && (y - 1 < (i + 1)*brick.width))
+	if ((brick.bricks[i][j] == -1) && (x + 1 >= j * brick.length - r) && (x - 1 <= (j + 1) * brick.length + r) &&
+		(y + 1 >= i * brick.width - r) && (y - 1 <= (i + 1) * brick.width + r) && (y + 1 > i * brick.width - r) && (y - 1 < (i + 1) * brick.width))
 		return true;
 	else
 		return false;
@@ -385,7 +465,7 @@ void Ball::Smaller()
 
 void Ball::Faster()
 {
-	speed = 1.5;
+	speed++;
 }
 
 void Ball::Slower()
@@ -393,7 +473,7 @@ void Ball::Slower()
 	speed = 0.5;
 }
 
-void Ball::Move(Brick &brick, Board &board)
+void Ball::Move(Brick& brick, Board& board)
 {
 	BeginBatchDraw();//批绘图功能
 
@@ -439,12 +519,12 @@ void Ball::Move(Brick &brick, Board &board)
 			breakOut++;             //击碎砖块数加一
 			flag = 1;               //击中后跳出循环
 			setfillcolor(BLACK);    //清除所打碎的砖块
-			fillrectangle(j*brick.length, i*brick.width, (j + 1)*brick.length, (i + 1)*brick.width);
+			fillrectangle(j * brick.length, i * brick.width, (j + 1) * brick.length, (i + 1) * brick.width);
 		}
 	}
 
 	if (y + 1 < board.y - r)//如果球在木板上方则 小球已经发射（图形窗口中纵坐标自上而下增长）
-		GO = 1;   
+		GO = 1;
 
 	//小球位置移动
 	setfillcolor(BLACK);
@@ -456,6 +536,83 @@ void Ball::Move(Brick &brick, Board &board)
 
 	EndBatchDraw();//一次性完成清除图形和重新画图
 	Sleep(3);//移动间隔
-		
+
 
 }
+
+
+
+
+//排行榜
+void list(string user_name)
+{
+	map<string, int> old_map;
+	ifstream ins("list.txt", ios::in);//打开文件
+	ofstream ous;
+
+	if (!ins)
+	{
+		//不存在 新建
+		ous.open("list.txt");
+	}
+	else
+	{
+		while (!ins.eof())
+	    {
+		    int score;
+		    string name;
+		    ins >> name >> score;
+		    old_map.insert(make_pair(name, score));
+	    }
+
+	}
+	
+
+	map<string, int>::iterator it = old_map.find(user_name);//插入
+	if (it != old_map.end() && score > it->second)
+	{
+		it->second = score;
+	}
+	else if (it == old_map.end())
+	{
+		old_map.insert(make_pair(user_name, score));
+
+	}
+	struct CmpByScore //排序
+	{
+		bool operator()(const pair<string, int>& lhs, const pair<string, int>& rhs)
+		{
+			return lhs.second > rhs.second;
+		}
+	};
+	vector<pair<string, int>> old_vec(old_map.begin(), old_map.end());
+	sort(old_vec.begin(), old_vec.end(), CmpByScore());
+	ofstream out("list.txt", ios::ate);
+	for (vector<pair<string, int>>::iterator it2 = old_vec.begin(); it2 != old_vec.end(); ++it2)
+	{
+		out << it2->first << "     "<< it2->second;
+	}
+}
+
+int list_out()
+{
+	map<string, int> new_map;
+	ifstream ins("list.txt");
+	if (!ins)
+	{
+		cout << "您是第一个用户。" << endl;
+		system("pause");
+		ins.close();
+		return 0;
+	}
+	cout<< "用户"<<"     "<< "得分" << endl << endl;
+	while (!ins.eof())
+	{
+		int score;
+		string name;
+		ins >> name >> score;
+		cout << name << "       " << score << endl << endl;
+	}
+	return 0;
+}
+
