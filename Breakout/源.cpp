@@ -148,6 +148,7 @@ int main()
 			closegraph();
 			list_out();
 			system("pause");
+			system("cls");
 			initgraph(400, 600);
 			WelcomePage();
 			break;
