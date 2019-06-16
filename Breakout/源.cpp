@@ -204,7 +204,8 @@ void Brick::DrawBricks()
 		{
 			if (bricks[i][j] == -1)
 			{
-                                setfillcolor(YELLOW);
+				color = 5636095 + i * 30000 + j * 300000;
+                                setfillcolor(color);
 				fillrectangle(j*length, i*width, (j + 1)*length, (i + 1)*width);
 			}
 		}
